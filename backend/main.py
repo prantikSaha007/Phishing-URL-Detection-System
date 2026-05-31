@@ -39,6 +39,8 @@ from cti import CTIOrchestrator          # noqa: E402
 from forensics import DNSWHOISForensics  # noqa: E402
 from obfuscation import decode_url       # noqa: E402
 
+from download_model import download_if_missing
+download_if_missing()
 # ─────────────────────────────────────────────────────────────────────────────
 # App bootstrap
 # ─────────────────────────────────────────────────────────────────────────────
