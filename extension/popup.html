@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PhishGuard</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      width: 340px;
+      min-height: 420px;
+      background: #030712;
+      color: #e5e7eb;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+    }
+
+    /* ── Header ── */
+    .header {
+      background: #0f172a;
+      border-bottom: 1px solid #1e293b;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .logo { display: flex; align-items: center; gap: 6px; }
+    .logo-icon { font-size: 18px; }
+    .logo-text { font-weight: bold; letter-spacing: 3px; color: #06b6d4; font-size: 11px; }
+    .toggle-wrap { display: flex; align-items: center; gap: 6px; }
+    .toggle-label { color: #6b7280; font-size: 10px; }
+    .toggle {
+      position: relative; width: 32px; height: 18px; cursor: pointer;
+    }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider {
+      position: absolute; inset: 0; background: #374151; border-radius: 9px;
+      transition: .2s;
+    }
+    .toggle-slider::before {
+      content: ""; position: absolute; height: 12px; width: 12px;
+      left: 3px; bottom: 3px; background: white; border-radius: 50%;
+      transition: .2s;
+    }
+    input:checked + .toggle-slider { background: #06b6d4; }
+    input:checked + .toggle-slider::before { transform: translateX(14px); }
+
+    /* ── Verdict card ── */
+    .verdict-card {
+      margin: 12px;
+      border-radius: 8px;
+      border: 1px solid #1e293b;
+      padding: 14px;
+      background: #0f172a;
+    }
+    .verdict-card.phishing   { border-color: #991b1b; background: #1c0a0a; }
+    .verdict-card.suspicious { border-color: #92400e; background: #1a1000; }
+    .verdict-card.benign     { border-color: #14532d; background: #041a0e; }
+
+    .verdict-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .verdict-label {
+      font-weight: bold; font-size: 13px; letter-spacing: 2px; text-transform: uppercase;
+    }
+    .phishing .verdict-label   { color: #ef4444; }
+    .suspicious .verdict-label { color: #f59e0b; }
+    .benign .verdict-label     { color: #22c55e; }
+    .verdict-score { font-size: 20px; font-weight: bold; }
+    .phishing .verdict-score   { color: #ef4444; }
+    .suspicious .verdict-score { color: #f59e0b; }
+    .benign .verdict-score     { color: #22c55e; }
+
+    .verdict-url {
+      font-size: 10px; color: #6b7280; word-break: break-all;
+      max-height: 36px; overflow: hidden; line-height: 1.4;
+    }
+
+    .risk-list { margin-top: 8px; }
+    .risk-item { font-size: 10px; color: #9ca3af; padding: 2px 0; }
+
+    /* ── Score bar ── */
+    .score-bar-wrap { margin: 0 12px 10px; }
+    .score-bar-bg {
+      height: 4px; background: #1e293b; border-radius: 2px; overflow: hidden;
+    }
+    .score-bar-fill {
+      height: 100%; border-radius: 2px;
+      transition: width .4s ease;
+    }
+
+    /* ── Stats ── */
+    .stats-row {
+      display: flex; gap: 6px; margin: 0 12px 10px;
+    }
+    .stat-pill {
+      flex: 1; text-align: center; padding: 5px;
+      background: #0f172a; border: 1px solid #1e293b; border-radius: 6px;
+    }
+    .stat-num { font-size: 15px; font-weight: bold; }
+    .stat-lbl { font-size: 9px; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; }
+    .red    { color: #ef4444; }
+    .yellow { color: #f59e0b; }
+    .green  { color: #22c55e; }
+    .cyan   { color: #06b6d4; }
+
+    /* ── Actions ── */
+    .actions { display: flex; gap: 6px; margin: 0 12px 12px; }
+    .btn {
+      flex: 1; padding: 7px; border-radius: 5px; border: none; cursor: pointer;
+      font-family: inherit; font-size: 10px; letter-spacing: 1px;
+      text-transform: uppercase; font-weight: bold; transition: .15s;
+    }
+    .btn-scan {
+      background: #06b6d4; color: #030712;
+    }
+    .btn-scan:hover { background: #22d3ee; }
+    .btn-scan:disabled { background: #164e63; color: #0e7490; cursor: not-allowed; }
+    .btn-dash {
+      background: #0f172a; color: #06b6d4; border: 1px solid #0e7490;
+    }
+    .btn-dash:hover { background: #0e7490; color: white; }
+
+    /* ── History ── */
+    .section-title {
+      margin: 8px 12px 4px;
+      font-size: 9px; color: #4b5563; text-transform: uppercase; letter-spacing: 2px;
+    }
+    .history-list { margin: 0 8px 10px; max-height: 110px; overflow-y: auto; }
+    .history-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 4px 4px; border-bottom: 1px solid #111827;
+    }
+    .history-url { flex: 1; font-size: 9px; color: #6b7280; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .history-badge {
+      font-size: 8px; font-weight: bold; padding: 1px 5px; border-radius: 3px;
+      text-transform: uppercase; letter-spacing: 1px; margin-left: 4px; shrink: 0;
+    }
+    .badge-phishing   { background: #450a0a; color: #ef4444; }
+    .badge-suspicious { background: #422006; color: #f59e0b; }
+    .badge-benign     { background: #052e16; color: #22c55e; }
+
+    /* ── Scanning state ── */
+    .scanning-spinner { text-align: center; padding: 20px; color: #06b6d4; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spin { display: inline-block; animation: spin 1s linear infinite; font-size: 20px; }
+
+    /* ── Disabled state ── */
+    .disabled-msg { text-align: center; padding: 30px 20px; color: #4b5563; font-size: 11px; }
+
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 2px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">
+      <span class="logo-icon">🛡</span>
+      <span class="logo-text">PHISHGUARD</span>
+    </div>
+    <div class="toggle-wrap">
+      <span class="toggle-label" id="enabledLabel">ON</span>
+      <label class="toggle">
+        <input type="checkbox" id="enabledToggle" checked />
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+  </div>
+
+  <div id="content">
+    <div class="scanning-spinner"><span class="spin">⊛</span><br/><br/>Loading…</div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
